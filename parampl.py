@@ -3,7 +3,7 @@
 # Parampl
 # Author: Artur Olszak
 # Institute of Computer Science, Warsaw University of Technology
-# Version: 1.0 (01.01.2014)
+# Version: 1.0.1 (18.04.2016)
 #
 # Copyright (c) 2013, Artur Olszak, Institute of Computer Science, Warsaw University of Technology
 # All rights reserved.
@@ -34,6 +34,8 @@ import re
 import sys
 import time
 import py_compile
+import subprocess
+
 
 
 
@@ -291,7 +293,6 @@ class Parampl:
         os.spawnvp(os.P_NOWAIT, sys.executable, (sys.executable, PARAMPL_PYTHON_OPTIONS, os.path.abspath(__file__),  PARAMPL_PARAM_RUN_SOLVER_WITH_NOTIFY, solver, queueId, str(jobNumber)))
       elif paramplConfUnixBkgMethod == PARAMPL_CONF_UNIX_BKG_METHOD_SCREEN:
         os.spawnvp(os.P_WAIT, "screen", ("screen", "-dm", sys.executable, PARAMPL_PYTHON_OPTIONS, os.path.abspath(__file__),  PARAMPL_PARAM_RUN_SOLVER_WITH_NOTIFY, solver, queueId, str(jobNumber)))
-        #os.system("screen -dm " + sys.executable + " " + PARAMPL_PYTHON_OPTIONS + " " + os.path.abspath(__file__) + " " + PARAMPL_PARAM_RUN_SOLVER_WITH_NOTIFY + " " + solver + " " + queueId + " " + str(jobNumber))
     elif os.name == "nt":
       os.spawnv(os.P_NOWAIT, sys.executable, (sys.executable, PARAMPL_PYTHON_OPTIONS, os.path.abspath(__file__),  PARAMPL_PARAM_RUN_SOLVER_WITH_NOTIFY, solver, queueId, str(jobNumber)))
 
@@ -300,9 +301,9 @@ class Parampl:
   def runSolverWithNotify(self, solver, queueId, jobNumber):
     if os.name == "posix":
       os.spawnvp(os.P_WAIT, solver, (solver, PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber), "-AMPL"))
-      #os.system(solver + " " + PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber) + " -AMPL")
     elif os.name == "nt":
-      os.spawnv(os.P_WAIT, solver, (solver, PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber), "-AMPL"))
+      #os.spawnv(os.P_WAIT, solver, (solver, PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber), "-AMPL"))
+      subprocess.call([solver, PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber), "-AMPL"], shell=True);
     else:
       sys.stdout.write("Parampl should be executed under Unix or Windows operating system.\n");
       sys.exit(1)
@@ -314,7 +315,7 @@ class Parampl:
 
 USAGE =\
 """
-Parampl v.1.0
+Parampl v.1.0.1
 Usage: python parampl.py args
   install               # creates all files required by parampl
   installc              # creates all files required by parampl (compiled)
