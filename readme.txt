@@ -1,7 +1,7 @@
-Parampl v.1.0.0
+Parampl v.1.0.1
 Author: Artur Olszak
 Institute of Computer Science, Warsaw University of Technology                                                                                          
-Version: 1.0.0 (01.01.2014)
+Version: 1.0.1 (18.04.2016)
 
 Copyright (c) 2013, Artur Olszak, Institute of Computer Science, Warsaw University of Technology
 All rights reserved.
