@@ -1,0 +1,5 @@
+1.0.0:
+
+1.0.1:
+	bug #1: Solver accessible via PATH env. variable cannot be called from Parampl on Windows
+
