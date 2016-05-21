@@ -6,6 +6,7 @@ if [ -n "$1" ]; then
 	rm parampl_job_$1_*.nl
 	rm parampl_job_$1_*.sol
 	rm parampl_job_$1_*.not
+	rm parampl_jobfile_$1
 	rm parampl_remote_$1
 else
 	echo \$1 is not set

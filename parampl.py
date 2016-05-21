@@ -79,6 +79,10 @@ PARAMPL_CONF_UNIX_BKG_METHOD_SCREEN = "screen"
 #PARAMPL_CONF_UNIX_BKG_METHOD_DEFAULT = PARAMPL_CONF_UNIX_BKG_METHOD_SCREEN
 PARAMPL_CONF_UNIX_BKG_METHOD_DEFAULT = PARAMPL_CONF_UNIX_BKG_METHOD_SPAWN_NOWAIT
 
+PARAMPL_CONF_NOT_FILE_RECHECK_WAIT_TIME = 0.01
+
+PARAMPL_CONF_IO_OP_RETRIES = 10
+PARAMPL_CONF_IO_OP_RETRY_WAIT_TIME = 0.1
 
 
 
@@ -135,11 +139,16 @@ class Parampl:
   def submit(self, queueId):
     jobNumber = 0
 
-    try:
-      jobfile = open(PARAMPL_JOB_FILE_PREFIX + "_" + queueId,'r')
-    except IOError:
-        jobNumber = 1
-    
+    if (os.path.isfile(PARAMPL_JOB_FILE_PREFIX + "_" + queueId)):
+      try:
+        jobfile = self.openFile(PARAMPL_JOB_FILE_PREFIX + "_" + queueId,'r')
+      except IOError:
+        sys.stdout.write("Error, could not open the job file.\n")
+        sys.stdout.write("Did you use paramplsub?\n")
+        sys.exit(1)
+    else:
+      jobNumber = 1
+
     if jobNumber == 0:
       m = re.match(r'(\d+)',jobfile.readline())
       while m:
@@ -154,7 +163,7 @@ class Parampl:
       sys.stdout.write("Error: Job not submitted.\n")
       sys.exit(1)
     
-    os.rename(self.problemfile(queueId) + "." + PARAMPL_NL_FILE_EXT, PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber) + "." + PARAMPL_NL_FILE_EXT)
+    self.renameFile(self.problemfile(queueId) + "." + PARAMPL_NL_FILE_EXT, PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber) + "." + PARAMPL_NL_FILE_EXT)
 
 
     #start the job:
@@ -167,8 +176,10 @@ class Parampl:
 
     self.runSolverWithNotifyInBkg(solverName, queueId, jobNumber)
 
-    jobfile = open(PARAMPL_JOB_FILE_PREFIX + "_" + queueId,'a')
+    jobfile = self.openFile(PARAMPL_JOB_FILE_PREFIX + "_" + queueId,'a')
     jobfile.write("%d\n" % (jobNumber))
+    jobfile.flush()
+    os.fsync(jobfile)
     jobfile.close()
 
 
@@ -181,8 +192,8 @@ class Parampl:
 
   def retrieve(self,queueId):
     try:
-      jobfile = open(PARAMPL_JOB_FILE_PREFIX + "_" + queueId,'r')
-    except IOError:
+      jobfile = self.openFile(PARAMPL_JOB_FILE_PREFIX + "_" + queueId,'r')
+    except:
       sys.stdout.write("Error, could not open the job file.\n")
       sys.stdout.write("Did you use paramplsub?\n")
       sys.exit(1)
@@ -205,26 +216,96 @@ class Parampl:
 
       if (os.path.isfile(PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber) + "." + PARAMPL_NOT_FILE_EXT)):
         if (os.path.isfile(PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber) + "." + PARAMPL_SOL_FILE_EXT)):
-          os.rename(PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber) + "." + PARAMPL_SOL_FILE_EXT, self.problemfile(queueId) + "." + PARAMPL_SOL_FILE_EXT)
+          try:
+            self.renameFile(PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber) + "." + PARAMPL_SOL_FILE_EXT, self.problemfile(queueId) + "." + PARAMPL_SOL_FILE_EXT)
+          except (Exception, BaseException) as e:
+            sys.stdout.write("Error, could not rename the solution file.\n")
+            sys.stdout.write("Error({0}): {1}".format(e.errno, e.strerror))
+            sys.exit(1)
         solReceived = True
       else:
-          time.sleep(0.01)
+          time.sleep(PARAMPL_CONF_NOT_FILE_RECHECK_WAIT_TIME)
 
-    os.unlink(PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber) + "." + PARAMPL_NL_FILE_EXT);
-    os.unlink(PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber) + "." + PARAMPL_NOT_FILE_EXT);
+    try:
+      self.unlinkFile(PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber) + "." + PARAMPL_NL_FILE_EXT);
+    except (Exception, BaseException) as e:
+      sys.stdout.write("Error, could not delete the problem file.\n")
+      sys.stdout.write("Error({0}): {1}".format(e.errno, e.strerror))
+      sys.exit(1)
+
+    try:
+      self.unlinkFile(PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber) + "." + PARAMPL_NOT_FILE_EXT);
+    except (Exception, BaseException) as e:
+      sys.stdout.write("Error, could not delete the notification file.\n")
+      sys.stdout.write("Error({0}): {1}".format(e.errno, e.strerror))
+      sys.exit(1)
+
 
 
     if restofstack:
-      jobfile = open(PARAMPL_JOB_FILE_PREFIX + "_" + queueId,'w')
+      try:
+        sys.stdout.write("Updating the jobfile\n")
+        jobfile = self.openFile(PARAMPL_JOB_FILE_PREFIX + "_" + queueId,'w')
+      except (Exception, BaseException) as e:
+        sys.stdout.write("Error, could not open the job file for writing.\n")
+        sys.stdout.write("Error({0}): {1}".format(e.errno, e.strerror))
+        sys.exit(1)
       jobfile.write(restofstack)
+      jobfile.flush()
+      os.fsync(jobfile)
       jobfile.close()
     else:
-      os.unlink(PARAMPL_JOB_FILE_PREFIX + "_" + queueId)
+      sys.stdout.write("Removing the jobfile\n")
+      self.unlinkFile(PARAMPL_JOB_FILE_PREFIX + "_" + queueId)
 
     sys.stdout.write("Retrieved stub\n")
 
 
 
+
+  def openFile(self,fileName,mode):
+    ioRetries = 0
+    while ioRetries < PARAMPL_CONF_IO_OP_RETRIES:
+      try:
+        ioRetries = ioRetries + 1
+        file = open(fileName,mode)
+        return file
+      except:
+        if (ioRetries == PARAMPL_CONF_IO_OP_RETRIES):
+          raise
+        else:
+          sys.stdout.write("Error opening file: " + fileName + ", mode: " + mode + ". Retrying #" + str(ioRetries) + " in " + str(PARAMPL_CONF_IO_OP_RETRY_WAIT_TIME) + " sec... \n")
+          time.sleep(PARAMPL_CONF_IO_OP_RETRY_WAIT_TIME)
+
+
+  def renameFile(self,old,new):
+    ioRetries = 0
+    while ioRetries < PARAMPL_CONF_IO_OP_RETRIES:
+      try:
+        ioRetries = ioRetries + 1
+        os.rename(old, new)
+        return file
+      except:
+        if (ioRetries == PARAMPL_CONF_IO_OP_RETRIES):
+          raise
+        else:
+          sys.stdout.write("Error renaming file: " + old + " to: " + new + ". Retrying #" + str(ioRetries) + " in " + str(PARAMPL_CONF_IO_OP_RETRY_WAIT_TIME) + " sec... \n")
+          time.sleep(PARAMPL_CONF_IO_OP_RETRY_WAIT_TIME)
+
+
+  def unlinkFile(self,fileName):
+    ioRetries = 0
+    while ioRetries < PARAMPL_CONF_IO_OP_RETRIES:
+      try:
+        ioRetries = ioRetries + 1
+        os.unlink(fileName);
+        return file
+      except:
+        if (ioRetries == PARAMPL_CONF_IO_OP_RETRIES):
+          raise
+        else:
+          sys.stdout.write("Error deleting file: " + fileName + ". Retrying #" + str(ioRetries) + " in " + str(PARAMPL_CONF_IO_OP_RETRY_WAIT_TIME) + " sec... \n")
+          time.sleep(PARAMPL_CONF_IO_OP_RETRY_WAIT_TIME)
 
 
   def getTask(self):
@@ -309,7 +390,9 @@ class Parampl:
       sys.stdout.write("Parampl should be executed under Unix or Windows operating system.\n");
       sys.exit(1)
 
-    notifyFile = open(PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber) + "." + PARAMPL_NOT_FILE_EXT, 'w')
+    notifyFile = self.openFile(PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber) + "." + PARAMPL_NOT_FILE_EXT, 'w')
+    notifyFile.flush()
+    os.fsync(notifyFile)
     notifyFile.close()
 
 
