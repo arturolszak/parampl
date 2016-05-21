@@ -8,6 +8,7 @@ if [%1] == [] goto error1
 	del parampl_job_%1_*.sol
 	del parampl_job_%1_*.not
 	del parampl_jobfile_%1
+	del parampl_remote_%1
 	goto end
 
 :error1

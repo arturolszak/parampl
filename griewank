@@ -1,0 +1,121 @@
+option solver knitro;
+option parampl_options 'solver=knitro';
+option parampl_queue_id 'griewanktest';
+
+#determines the number of equal-size slices to which the hypercube will be split
+param p;
+let p := num($griewank_p);
+
+
+
+#determines the dimension in which the space is split
+param dim_p;
+let dim_p := num($griewank_dim_p);
+
+
+#defines how the program should be executed: 
+# 	1 - sequential with solve command
+# 	2 - parallel (local) with parampl
+# 	3 - parallel (distributed) with parampl
+param execution;
+let execution := num($griewank_ex);
+
+
+
+param n;
+let n := num($griewank_n);
+
+
+
+param xmax;
+param xmin;
+let xmax := num($griewank_xmax);
+let xmin := -xmax;
+
+
+
+param bsize;
+let bsize := num($griewank_bsize);
+
+
+
+param xmin1;
+param xmax1;
+param dx;
+
+param bn;
+param kk;
+
+var  x{1..n};
+
+minimize f:
+	1/4000*sum{i in 1..n} x[i]^2 - prod{i in 1..n} cos(x[i]/sqrt(i)) + 1;
+
+
+subject to cons1 {i in 1..n}:
+	xmin <= x[i] <= xmax;
+
+subject to cons2:
+	xmin1 <= x[dim_p] <= xmax1;
+	
+let dx:=(xmax-xmin)/p;
+
+if execution == 1 then {
+	for{k in 1..p}{
+		let {i in 1..n} x[i] := 0;
+		printf "\n\n-- Subtask: %d --:\n", k;
+		let xmin1:=xmin+(k-1)*dx;
+		let xmax1:=xmin1+dx;
+		solve;
+	}
+}
+if execution == 2 then {
+#	for{k in 1..p}{
+#		let {i in 1..n} x[i] := 0;
+#		printf "\n\n-- Subtask: %d --:\n", k;
+#		let xmin1:=xmin+(k-1)*dx;
+#		let xmax1:=xmin1+dx;
+#		commands paramplsub;
+#		commands paramplret;
+#	}
+	let bn:=1;
+	repeat while (bn-1) * bsize <= p  {
+		for {b in 1..bsize}{
+			let kk := (bn-1) * bsize + b;
+			if kk > p then break;
+			let {i in 1..n} x[i] := 0;
+			printf "\n\n-- Subtask: %d --:\n", kk;
+			let xmin1:=xmin+(kk-1)*dx;
+			let xmax1:=xmin1+dx;
+			commands paramplsub;
+		}
+		for {b in 1..bsize}{
+			let kk := (bn-1) * bsize + b;
+			if kk > p then break;
+			commands paramplret;
+		}
+		let bn := bn + 1;
+	}
+}
+if execution == 3 then {
+	let bn:=1;
+	repeat while (bn-1) * bsize <= p  {
+		for {b in 1..bsize}{
+			let kk := (bn-1) * bsize + b;
+			if kk > p then break;
+			let {i in 1..n} x[i] := 0;
+			printf "\n\n-- Subtask: %d --:\n", kk;
+			let xmin1:=xmin+(kk-1)*dx;
+			let xmax1:=xmin1+dx;
+			commands paramplrsub;
+		}
+		for {b in 1..bsize}{
+			let kk := (bn-1) * bsize + b;
+			if kk > p then break;
+			commands paramplrret;
+		}
+		let bn := bn + 1;
+	}
+}
+
+

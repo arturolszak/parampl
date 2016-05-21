@@ -1,0 +1,5 @@
+shell 'python -S parampl.py rretrieve';
+if shell_exitcode == 0 then {
+    solution ("parampl_problem_" & $parampl_queue_id & ".sol");
+    remove ("parampl_problem_" & $parampl_queue_id & ".sol");
+}
