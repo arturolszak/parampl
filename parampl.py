@@ -3,7 +3,7 @@
 # Parampl
 # Author: Artur Olszak
 # Institute of Computer Science, Warsaw University of Technology
-# Version: 1.0.3 (21.05.2016)
+# Version: 1.0.4 (17.10.2016)
 #
 # Copyright (c) 2013, Artur Olszak, Institute of Computer Science, Warsaw University of Technology
 # All rights reserved.
@@ -402,7 +402,7 @@ class Parampl:
 
 USAGE =\
 """
-Parampl v.1.0.3
+Parampl v.1.0.4
 Usage: python parampl.py args
   install               # creates all files required by parampl
   installc              # creates all files required by parampl (compiled)
