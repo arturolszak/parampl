@@ -8,3 +8,6 @@
 
 1.0.3:
 	feature #3: Error on parampl retrieve call (unable to delete the notification file), added retrying on i/o operation error
+
+1.0.4:
+	feature #5: Raise an error when the notofication file was found but there is no solution file
