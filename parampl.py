@@ -218,11 +218,14 @@ class Parampl:
         if (os.path.isfile(PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber) + "." + PARAMPL_SOL_FILE_EXT)):
           try:
             self.renameFile(PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber) + "." + PARAMPL_SOL_FILE_EXT, self.problemfile(queueId) + "." + PARAMPL_SOL_FILE_EXT)
+            solReceived = True
           except (Exception, BaseException) as e:
             sys.stdout.write("Error, could not rename the solution file.\n")
             sys.stdout.write("Error({0}): {1}".format(e.errno, e.strerror))
             sys.exit(1)
-        solReceived = True
+        else:
+          sys.stdout.write("Error, the notification file was created, but the solution file does not exists.\n")
+          sys.exit(1)
       else:
           time.sleep(PARAMPL_CONF_NOT_FILE_RECHECK_WAIT_TIME)
 
