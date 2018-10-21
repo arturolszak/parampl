@@ -1,4 +1,5 @@
 1.0.0:
+	Initial release
 
 1.0.1:
 	bug #1: Solver accessible via PATH env. variable cannot be called from Parampl on Windows
@@ -11,3 +12,6 @@
 
 1.0.4:
 	feature #5: Raise an error when the notofication file was found but there is no solution file
+
+2.0.0:
+	feature #4: Extend Parampl with possibility of distributed execution of subtasks

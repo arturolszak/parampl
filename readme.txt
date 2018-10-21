@@ -1,9 +1,9 @@
-Parampl v.X.X.X
+Parampl
 Author: Artur Olszak
 Institute of Computer Science, Warsaw University of Technology                                                                                          
-Version: X.X.X (XX.XX.XXXX)
+Version: 2.0.0 (21.10.2018)
 
-Copyright (c) 2013, Artur Olszak, Institute of Computer Science, Warsaw University of Technology
+Copyright (c) 2018, Artur Olszak, Institute of Computer Science, Warsaw University of Technology
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
