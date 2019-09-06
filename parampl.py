@@ -594,12 +594,12 @@ class Parampl:
       if paramplConfUnixBkgMethod != PARAMPL_CONF_UNIX_BKG_METHOD_SPAWN_NOWAIT and paramplConfUnixBkgMethod != PARAMPL_CONF_UNIX_BKG_METHOD_SCREEN:
         paramplConfUnixBkgMethod = PARAMPL_CONF_UNIX_BKG_METHOD_DEFAULT
       if paramplConfUnixBkgMethod == PARAMPL_CONF_UNIX_BKG_METHOD_SPAWN_NOWAIT:
-        os.spawnvp(os.P_NOWAIT, sys.executable, (sys.executable, PARAMPL_PYTHON_OPTIONS, os.path.abspath(__file__),  PARAMPL_PARAM_RUN_SOLVER_WITH_NOTIFY, solver, queueId, str(jobNumber)))
+        os.spawnvp(os.P_NOWAIT, sys.executable, (os.path.basename(os.path.normpath(sys.executable)), PARAMPL_PYTHON_OPTIONS, os.path.abspath(__file__),  PARAMPL_PARAM_RUN_SOLVER_WITH_NOTIFY, solver, queueId, str(jobNumber)))
       elif paramplConfUnixBkgMethod == PARAMPL_CONF_UNIX_BKG_METHOD_SCREEN:
         os.spawnvp(os.P_WAIT, "screen", ("screen", "-dm", sys.executable, PARAMPL_PYTHON_OPTIONS, os.path.abspath(__file__),  PARAMPL_PARAM_RUN_SOLVER_WITH_NOTIFY, solver, queueId, str(jobNumber)))
         #os.system("screen -dm " + sys.executable + " " + PARAMPL_PYTHON_OPTIONS + " " + os.path.abspath(__file__) + " " + PARAMPL_PARAM_RUN_SOLVER_WITH_NOTIFY + " " + solver + " " + queueId + " " + str(jobNumber))
     elif os.name == "nt":
-      os.spawnv(os.P_NOWAIT, sys.executable, (sys.executable, PARAMPL_PYTHON_OPTIONS, os.path.abspath(__file__),  PARAMPL_PARAM_RUN_SOLVER_WITH_NOTIFY, solver, queueId, str(jobNumber)))
+      os.spawnv(os.P_NOWAIT, sys.executable, (os.path.basename(os.path.normpath(sys.executable)), PARAMPL_PYTHON_OPTIONS, os.path.abspath(__file__),  PARAMPL_PARAM_RUN_SOLVER_WITH_NOTIFY, solver, queueId, str(jobNumber)))
 
 
 
