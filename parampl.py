@@ -605,9 +605,9 @@ class Parampl:
 
   def runSolverWithNotify(self, solver, queueId, jobNumber):
     if os.name == "posix":
-      os.spawnvp(os.P_WAIT, solver, (solver, PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber), "-AMPL"))
+      os.spawnvp(os.P_WAIT, solver, (os.path.basename(os.path.normpath(solver)), PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber), "-AMPL"))
     elif os.name == "nt":
-      #os.spawnv(os.P_WAIT, solver, (solver, PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber), "-AMPL"))
+      #os.spawnv(os.P_WAIT, solver, (os.path.basename(os.path.normpath(solver)), PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber), "-AMPL"))
       subprocess.call([solver, PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber), "-AMPL"], shell=True);
     else:
       sys.stdout.write("Parampl should be executed under Unix or Windows operating system.\n");
