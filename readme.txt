@@ -84,6 +84,8 @@ option  parampl_options  'solver=ipopt';
 option  parampl_queue_id  'powelltest';
 option  ipopt_options  'mu_init=1e-6 max_iter=10000';
 
+* The path to the solver selected in the "parampl_options" option should be included in the PATH env. variable. Alternatively, the solver name might be replaced by the full path of the solver executable (which can be also a relative path), for example:
+option  parampl_options  'solver=/home/artur/parampl/ipopt';
 
 The paramplsub script saves the current problem to a .nl file (using AMPL command write) and executes Parampl with the parameter submit. When executed with the parameter submit, Parampl generates a unique identifier for the task, the generated .nl file is renamed to a temporary file, and the solver is executed in a separate process passing the .nl file to it. The tasks submitted in this way are executed in parallel in separate processes. After calculating the solution, the solver creates a solution (.sol) file with the file name corresponding to the temporary problem file passed to the solver upon execution.
 
