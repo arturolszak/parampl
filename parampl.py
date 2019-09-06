@@ -35,6 +35,7 @@ import sys
 import time
 import py_compile
 import subprocess
+import shutil
 
 
 
@@ -175,7 +176,7 @@ class Parampl:
   def submit(self, queueId):
     jobNumber = 0
 
-    if (os.path.isfile(PARAMPL_JOB_FILE_PREFIX + "_" + queueId)):
+    if (os.path.isfile(os.path.abspath(PARAMPL_JOB_FILE_PREFIX + "_" + queueId))):
       try:
         jobfile = self.openFile(PARAMPL_JOB_FILE_PREFIX + "_" + queueId,'r')
       except IOError:
@@ -352,8 +353,8 @@ class Parampl:
 
     while solReceived == False:
 
-      if (os.path.isfile(PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber) + "." + PARAMPL_NOT_FILE_EXT)):
-        if (os.path.isfile(PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber) + "." + PARAMPL_SOL_FILE_EXT)):
+      if (os.path.isfile(os.path.abspath(PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber) + "." + PARAMPL_NOT_FILE_EXT))):
+        if (os.path.isfile(os.path.abspath(PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber) + "." + PARAMPL_SOL_FILE_EXT))):
           try:
             self.renameFile(PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber) + "." + PARAMPL_SOL_FILE_EXT, self.problemfile(queueId) + "." + PARAMPL_SOL_FILE_EXT)
             solReceived = True
@@ -459,7 +460,7 @@ class Parampl:
 
         os.system("scp " + h_login + "@" + h_name + ":" + h_dir + "/" + self.problemfile(queueId) + "." + PARAMPL_REM_SOL_FILE_EXT + " ./")
 
-        os.rename(self.problemfile(queueId) + "." + PARAMPL_REM_SOL_FILE_EXT, self.problemfile(queueId) + "." + PARAMPL_SOL_FILE_EXT)
+        self.renameFile(self.problemfile(queueId) + "." + PARAMPL_REM_SOL_FILE_EXT, self.problemfile(queueId) + "." + PARAMPL_SOL_FILE_EXT)
 
         os.system("ssh -l " + h_login + " " + h_name + " rm -f " + h_dir + "/" + self.problemfile(queueId) + "." + PARAMPL_REM_SOL_FILE_EXT)
       
@@ -479,7 +480,7 @@ class Parampl:
     while ioRetries < PARAMPL_CONF_IO_OP_RETRIES:
       try:
         ioRetries = ioRetries + 1
-        file = open(fileName,mode)
+        file = open(os.path.abspath(fileName),mode)
         return file
       except:
         if (ioRetries == PARAMPL_CONF_IO_OP_RETRIES):
@@ -490,17 +491,22 @@ class Parampl:
 
 
   def renameFile(self,old,new):
+    self.copyFile(old, new)
+    self.unlinkFile(old)
+
+
+  def copyFile(self,old,new):
     ioRetries = 0
     while ioRetries < PARAMPL_CONF_IO_OP_RETRIES:
       try:
         ioRetries = ioRetries + 1
-        os.rename(old, new)
-        return file
+        shutil.copy(os.path.abspath(old), os.path.abspath(new))
+        return
       except:
         if (ioRetries == PARAMPL_CONF_IO_OP_RETRIES):
           raise
         else:
-          sys.stdout.write("Error renaming file: " + old + " to: " + new + ". Retrying #" + str(ioRetries) + " in " + str(PARAMPL_CONF_IO_OP_RETRY_WAIT_TIME) + " sec... \n")
+          sys.stdout.write("Error copying file: " + old + " to: " + new + ". Retrying #" + str(ioRetries) + " in " + str(PARAMPL_CONF_IO_OP_RETRY_WAIT_TIME) + " sec... \n")
           time.sleep(PARAMPL_CONF_IO_OP_RETRY_WAIT_TIME)
 
 
@@ -509,8 +515,8 @@ class Parampl:
     while ioRetries < PARAMPL_CONF_IO_OP_RETRIES:
       try:
         ioRetries = ioRetries + 1
-        os.unlink(fileName);
-        return file
+        os.unlink(os.path.abspath(fileName));
+        return
       except:
         if (ioRetries == PARAMPL_CONF_IO_OP_RETRIES):
           raise
@@ -588,20 +594,20 @@ class Parampl:
       if paramplConfUnixBkgMethod != PARAMPL_CONF_UNIX_BKG_METHOD_SPAWN_NOWAIT and paramplConfUnixBkgMethod != PARAMPL_CONF_UNIX_BKG_METHOD_SCREEN:
         paramplConfUnixBkgMethod = PARAMPL_CONF_UNIX_BKG_METHOD_DEFAULT
       if paramplConfUnixBkgMethod == PARAMPL_CONF_UNIX_BKG_METHOD_SPAWN_NOWAIT:
-        os.spawnvp(os.P_NOWAIT, sys.executable, (sys.executable, PARAMPL_PYTHON_OPTIONS, os.path.abspath(__file__),  PARAMPL_PARAM_RUN_SOLVER_WITH_NOTIFY, solver, queueId, str(jobNumber)))
+        os.spawnvp(os.P_NOWAIT, sys.executable, (os.path.basename(os.path.normpath(sys.executable)), PARAMPL_PYTHON_OPTIONS, os.path.abspath(__file__),  PARAMPL_PARAM_RUN_SOLVER_WITH_NOTIFY, solver, queueId, str(jobNumber)))
       elif paramplConfUnixBkgMethod == PARAMPL_CONF_UNIX_BKG_METHOD_SCREEN:
         os.spawnvp(os.P_WAIT, "screen", ("screen", "-dm", sys.executable, PARAMPL_PYTHON_OPTIONS, os.path.abspath(__file__),  PARAMPL_PARAM_RUN_SOLVER_WITH_NOTIFY, solver, queueId, str(jobNumber)))
         #os.system("screen -dm " + sys.executable + " " + PARAMPL_PYTHON_OPTIONS + " " + os.path.abspath(__file__) + " " + PARAMPL_PARAM_RUN_SOLVER_WITH_NOTIFY + " " + solver + " " + queueId + " " + str(jobNumber))
     elif os.name == "nt":
-      os.spawnv(os.P_NOWAIT, sys.executable, (sys.executable, PARAMPL_PYTHON_OPTIONS, os.path.abspath(__file__),  PARAMPL_PARAM_RUN_SOLVER_WITH_NOTIFY, solver, queueId, str(jobNumber)))
+      os.spawnv(os.P_NOWAIT, sys.executable, (os.path.basename(os.path.normpath(sys.executable)), PARAMPL_PYTHON_OPTIONS, os.path.abspath(__file__),  PARAMPL_PARAM_RUN_SOLVER_WITH_NOTIFY, solver, queueId, str(jobNumber)))
 
 
 
   def runSolverWithNotify(self, solver, queueId, jobNumber):
     if os.name == "posix":
-      os.spawnvp(os.P_WAIT, solver, (solver, PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber), "-AMPL"))
+      os.spawnvp(os.P_WAIT, solver, (os.path.basename(os.path.normpath(solver)), PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber), "-AMPL"))
     elif os.name == "nt":
-      #os.spawnv(os.P_WAIT, solver, (solver, PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber), "-AMPL"))
+      #os.spawnv(os.P_WAIT, solver, (os.path.basename(os.path.normpath(solver)), PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber), "-AMPL"))
       subprocess.call([solver, PARAMPL_JOB_PROBLEM_FILE_PREFIX + "_" + queueId + "_" + str(jobNumber), "-AMPL"], shell=True);
     else:
       sys.stdout.write("Parampl should be executed under Unix or Windows operating system.\n");
