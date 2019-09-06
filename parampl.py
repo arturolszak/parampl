@@ -516,7 +516,7 @@ class Parampl:
       try:
         ioRetries = ioRetries + 1
         os.unlink(os.path.abspath(fileName));
-        return file
+        return
       except:
         if (ioRetries == PARAMPL_CONF_IO_OP_RETRIES):
           raise
